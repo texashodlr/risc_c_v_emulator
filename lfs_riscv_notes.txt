@@ -1,0 +1,110 @@
+RISC-V Symbolic Register Names:
+Register:       ABI Names   Desc        Saver
+x0      zero    Hard-wired zero     -
+x1      ra      return address      Caller
+x2      sp      stack pointer       Callee
+x3      gp      global pointer      -
+x4      tp      thread pointer      -
+x5      t0      Temp/Alt Link Register Caller
+x6-7    t1-2    Temp                Caller
+x8      s0/fp   Saved Register/Frame pointer Callee
+x9      s1      Saved Register      Callee
+x10-11  a0-1    Function Args/Return Values Caller
+x12-17  a2-7    Function Arguments  Caller
+x18-27  s2-11   Saved Registers     Callee
+X29-31  t3-6    Temps               Caller
+
+Every single one of these registers is 32 Bits wide
+
+ABI == Application Binary Interface, specifies a purpose for all registers
+
+Most RV32I (base integer ISA) instructions can be grouped under:
+    Addition
+    Subtraction
+    Bitwise Logical Operations
+    Load and Store
+    Jumps
+    Branches
+
+Control Status Registers (CSRs) are a separate banke of registers with a
+    separate 12-bit address space, limiting their number to 4096
+    contain general data about the CPU and other mx/diag information
+
+CSRs are special registers that are designed to control and monitor the processor's
+    operations. They serve as the mechanism through which software interacts
+    with hardware to adjust settings, manage exceptions and acquire information about the processor's status.
+
+Most important CSRs:
+    mstatus (machine status) -- controls and monitors the machine's operating mode
+        and privilege level (M/S/U)
+    mepc (Machine exception program counter) -- stores the pc val of the insn that caused an exceptions
+        or interrupt
+    mtvec (Machine trap-vector base address) specifies the base addr of the trap handler for 
+        machine mode, determining where the proc should jump to when an excep occurs
+    mcause (Machine Cause register) -- provides information about the reason for the most recent exception or interrupt.
+    misa (Machine ISA Register) specifies the support ISA extensions + encodes the bit width of the base interacts
+        (RV32/64/128)
+    
+Vector (V) Extension Task Group
+'M' Extension signifies the multiplication extension which isn't included in the base spec.
+'F' Float Extension SP-FP (registers (f0 - f31))
+'D' Double Extension DP-FP
+'C' Compressed extension, which alternative 16-Bit encoding for subset of existing instructions
+RV32IMAC seems to be a general standard for RV
+
+Instruction encoding:
+    1x 32 Bit wide program counter register
+    32x 32Bit wide registers named x0-31
+    40x Unique 32-bit wide unprivileged insns in six different formats (R,I,S,B,U,J)
+    24x Add'l unique 32-bit wide privileged insns in two formats (R and I)
+
+    Fixed insn length -- all insns are encoded in 32 Bits
+
+More insn encodings:
+    R -- insns for two source one dest register (arith, logic ops)
+    I -- insns that involve an immediate val (constant) and a source register
+        Think: load or addi
+    S -- insns are a subset of the I, specifically for storing data into memory
+        may involve a source register an immediate offset and a base addr reg to
+        specify the memory location where the data is to be stored
+    B -- Insns are used for conditional branching operations. They compare two registers
+        and based on ther esult determine whether to take a branch insn or not
+            beq, bne
+    U -- Insns used for setting the upper bits of a register
+        to a const value, often used for init'ng pointers or addresses.
+        lui (load upper imme) and auipc (add upper imme to PC)
+    J -- Insns for unconditional jump Operations
+        jal (jump and link) -- subroutine calls.
+    
+    Different handlings of immediates is the exact characteristic that 
+        defines the insns types but all of them tend to encode the immediate
+        in a similar positions in order to simply HW implementation: All imme decode to 32-B wide
+
+    Insn in Ass Lang
+    add x1, x2, x3 --> 0x003100b3 --> 0000 0000 0011 0001 0000 0000 1011 0011
+    func7->rs2-> rs1->funct3->rd->opcode
+RISC-V Reference Card Exercises:
+    Which bitwise logical operations are available?
+        AND OR XOR
+    Which conditional branches are available?
+        beq/bne/blt/bge/
+    Which instructions use immediate values?
+        I-Type (ADD/XOR/OR/AND...)
+    Are there any traditional instructions missing?
+        !, ble bgt, ldi, nop, unconjump, etc
+
+There is no flag/condition-code register, relies on branch insn to evaluate conditions
+    using contents of gp registers
+x0 is read-only zero, no writing!
+
+No way to specify 32-b immediate in a single insn
+    all insns are encoded in the same length, so having to fetch a second word with an immediate
+    wouldn't be RISCy
+Any register other than x0 can be used as the stack pointer
+No mul or div, use regular arith and logical insns
+
+PMA Checker
+Physical Memory Protection -- Trusted execution environment -- limits the physical addreses access
+    by SW running on a hart (HW Thread)
+RISCV Supports page-based virtual memory of several widths and there is the special S-Mode
+    insn used for sync'ng updates between HW threads.
