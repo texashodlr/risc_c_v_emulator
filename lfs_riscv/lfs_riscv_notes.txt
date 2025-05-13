@@ -108,3 +108,72 @@ Physical Memory Protection -- Trusted execution environment -- limits the physic
     by SW running on a hart (HW Thread)
 RISCV Supports page-based virtual memory of several widths and there is the special S-Mode
     insn used for sync'ng updates between HW threads.
+
+## RISCV Assembly Language ##
+1. Instructions: short mnemonic (add/ld/xor) and a series of operands
+2. Registers: Processor internal memory locations used to store intermediate results and control information
+3. Labels: Symbolic names for memory locations that can be used as targets for branch and jump instructions
+4. Directives: Special commands used to cotnrol behavior of the assembler, such as setting memory regions or defining constants
+5. Macros: User-defined sequences of instructions taht can be invoked with a single macro-call
+6. Psuedo-Insns: Synthetic instructions that are translated by the assembler into one or more real instructions,
+    allowing for a higher level more concise representation of the code.
+
+General RISC-V Assembler Directives
+.align -- Aligns the location counter to a specified power of 2 boundary
+.section -- Specifies the section of the output file where the following data should be placed
+.byte defines an array of 8b values
+.half defines an array of 16b values
+.word defines an array of 32b values
+.data specifies the start of the data section where initialzied data is stored.
+.text specifies the start of the code section where instructions are stored.
+.globl declares a symbol as global and accessible from the other files
+.equ assigns a value to a symbol useful for constants
+.string defines a string of ASCII chars with a null terminator
+
+There's 4096 CSRs, each is associated with a HART
+    Unprivileged is interested in them as timers, counters, status
+
+CSR access in RISC-V works by using special instructions to read and write to specifi memory addrs'
+    that correspond to the various CSR
+    E.G: CSRRW (Control Status Register Read/Write)
+         CSRRS (Control Status Register Read and Set)
+         CSRRC (Control and Status Register Read and Clear)
+
+Labels, when an assembler encounters a label in the code, will record the memory address associated with the insn or data immediately
+    following the label and replace the label with a number that leads the code to the corresponding memory address in the assembled machine code
+EX:
+    loop:
+        add x1, x2, x3
+        addi x1, x1, 1
+        j loop
+The definition of loop causes the assembler to replace further appearances of Loop with the memory address associated with the Label
+    that is the address where the instruction immediately after the label will be stored
+
+Can do the same with .data:
+.data
+count:  .word    0          #4B word init'd at 0 so its address is the same as the beginning of the data section
+array:  .half    6, 5, 5, 3, 2, 1 # Address of array is the address of count+4, sequence of 6 half words (16b*6)
+msg:    .string  "Hey there"
+age:    .byte    21
+
+RV32I Insns are normally 12 bit in size but then size extend to the width of the dest reg
+
+RV32I instructions set includes the ecall instruction whch performs an environment call.
+    The insn has no ops instead we specifiy the environment call number in reg a0 and send any
+        args in the remaining a regs (like a1 for venus)
+    
+    addi a0 x0 1    # print_int ecall
+    addi a1 x0 42   # integer 42
+    ecall
+
+First insn loads 1 into a0 the means ecall #1 to print an integer on the screen
+Second insn loads 42 into a1
+Third is an ecall insn, runtime env of the sim takes the contents of the a1 and prints 42 in the termin
+
+VS Code venus provides two env calls 0x130, 0x131 to activiate terminal input the ecal 0x130 must be called
+    then run ecall 0x131 to read the input.
+    *Enter* -> Inputs are buffered
+    three states after calling 0x131 (read input)
+        a0 = 1 still waiting for input
+        a0 = 0 all input has been read/buffer is empty
+        a0 = 2 input has been deteced and one cahar has been read into a1 in UTf-16 code.

@@ -1,0 +1,27 @@
+This file is just a quick reference for RISCV Ass Insn Set Code
+
+add rd, rs1, rs2 -> Add Registers, Adding Rs1 with rs2 and storing the result in rd
+
+auipc rd, immediate -> Add upper immediate to the PC, adds the 20b immediate leftshifted by 12b
+    to the PC and writes the result to rd
+
+jal rd, offset -> jump and link, writes PC+4 to rd and jumps to PC plus the sign-extended offset
+
+jalr rd, offset(rs1) -> jump and link register; writes PC+4 to rd and jumps to rs1 plus the sign-extended offset
+
+lw rd, offset(rs1) -> load word, loads 4B from addr rs1 pus the sign-exten offset and writes them to rd
+
+lb rd, offset(rs1) -> load byte, loads the 1B from the address rs1 plus the sign-extended offset and writes it to rd
+
+lui rd, immediate -> load byte ,  writes the 20b immediate leftshifted by 12b to rd, zeroing the lower 12b
+addi rd,rs1,immediate -> load upper immediate, adds the 12b immed to rs1 and writes the result to rd
+
+sw rs2, offset(rs1) -> store word, stores the 4B from the rs2 into address rs1 plus the sign extend off
+
+sb rs2, offset(rs1) -> store Byte, stores the least significant B from rs2 into address rs1 plus the sign extended offset
+
+Pseudo instructions are valid instructions in assm but don't have a machine encoding, but translate to one or more RISC-V 
+    machine instructions, that end up performing its function
+    ex: nop / beqz / j (uncond jump) / jal offset / jr rs / ret (return from subroutine)
+        lla (load local address) / li (load immediate) / mv rd, rs / copy register / 
+        not rd, rs (one's complement) / bgt / call offset( call far away subroutine)
