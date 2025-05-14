@@ -176,4 +176,14 @@ VS Code venus provides two env calls 0x130, 0x131 to activiate terminal input th
     three states after calling 0x131 (read input)
         a0 = 1 still waiting for input
         a0 = 0 all input has been read/buffer is empty
-        a0 = 2 input has been deteced and one cahar has been read into a1 in UTf-16 code.
+        a0 = 2 input has been detected and one cahar has been read into a1 in UTf-16 code.
+
+Algorithm Code Notes:
+    char *str = "RISCV is the bomb!"
+    
+    String called str, which is technically a pointer to a char init'd to point to a hardcoded string
+        const that reads "RISCV...."
+
+ABI of an OS usually refers to the standardized interface between the system software (OS kernel) and user applicaitons that allow them to communicate and interoperate with eachother
+ABI defines how the components of an OS such as syslibs kernel and other low-level components interact with application programs
+Preprocessor -> Compiler -> Assembler -> Linker
